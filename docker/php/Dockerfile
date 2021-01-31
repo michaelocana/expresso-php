@@ -1,4 +1,4 @@
-FROM php:7-apache
+FROM php:7.4.1-apache
 
 RUN apt-get update -qq \
   && apt-get install wget mariadb-client -yq
@@ -12,9 +12,8 @@ RUN a2ensite 000-default
 # install the PHP extensions we need
 RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libpq-dev libzip-dev zip \
     && rm -rf /var/lib/apt/lists/* \
-    && docker-php-ext-configure zip --with-libzip \
-    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
-    && docker-php-ext-install gd mbstring opcache pdo pdo_mysql pdo_pgsql zip mysqli
+    && docker-php-ext-configure gd --with-jpeg=/usr \
+    && docker-php-ext-install gd opcache pdo pdo_mysql pdo_pgsql zip mysqli
 # set recommended PHP.ini settings
 # see https://secure.php.net/manual/en/opcache.installation.php
 RUN { \
@@ -48,5 +47,8 @@ RUN mv drush /usr/local/bin
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN composer --version
+
+# Install mbstring extension separately after removing from docker-php-ext-install. 
+RUN apt-get install libonig-dev
 
 WORKDIR /var/www/web
